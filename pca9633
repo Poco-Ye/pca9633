@@ -1,0 +1,332 @@
+#include <linux/module.h>
+
+#include <linux/delay.h>
+#include <linux/string.h>
+#include <linux/ctype.h>
+#include <linux/leds.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/workqueue.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/types.h>
+
+
+#define PCA9633_LED0            0
+#define PCA9633_LED1            1
+#define PCA9633_LED2            2
+#define PCA9633_LED3            3
+
+#define PCA9633_LED_OFF         0x0     
+#define PCA9633_LED_ON          0x1   
+#define PCA9633_LED_PWM         0x2   
+#define PCA9633_LED_GRP_PWM     0x3   
+
+#define PCA9633_MODE1           0x00
+#define PCA9633_MODE2           0x01
+#define PCA9633_PWM_BASE        0x02
+#define PCA9633_LEDOUT          0x08
+
+
+static struct class *__g_pca9633_class = NULL;
+static struct i2c_client *__g_i2c_client = NULL;
+
+
+
+
+static const struct i2c_device_id pca9633_id[] = {
+        {"pca9633",0},
+        {}
+};
+
+
+
+
+MODULE_DEVICE_TABLE(i2c, pca9633_id);
+
+
+
+void pca9633_control_brightness(int brightness)
+{
+  int i,shift;
+  u8  ledout,mask;
+  for(i=0;i<4;i++)
+  {
+    ledout = i2c_smbus_read_byte_data(__g_i2c_client, PCA9633_LEDOUT);
+        shift  = 2 * i;// led  num
+        mask   = 0x3 << shift;
+
+    if(brightness>255||brightness<0)
+        brightness = 255;
+
+        switch (brightness) {
+        case 255:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_ON << shift));
+                break;
+        case 0:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        ledout & ~mask);
+                break;
+        default:
+                i2c_smbus_write_byte_data(__g_i2c_client,
+                        PCA9633_PWM_BASE + i,
+                        brightness);
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_PWM << shift));
+                break;
+        }
+  }
+
+}
+
+
+
+EXPORT_SYMBOL(pca9633_control_brightness);
+
+
+static ssize_t pca9633_led0_brightness(struct class *cls,struct class_attribute *attr,
+                         const char *_buf, size_t _count)
+{
+
+    int brightness= 0;
+        u8  ledout = i2c_smbus_read_byte_data(__g_i2c_client, PCA9633_LEDOUT);
+        int shift = 2 * PCA9633_LED0;// led  num
+        u8  mask = 0x3 << shift;
+
+    brightness =  simple_strtol(_buf, NULL, 10);
+    if(brightness>255)
+        brightness = 255;
+
+        switch (brightness) {
+        case 255:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_ON << shift));
+                break;
+        case 0:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        ledout & ~mask);
+                break;
+        default:
+                i2c_smbus_write_byte_data(__g_i2c_client,
+                        PCA9633_PWM_BASE + PCA9633_LED0,
+                        brightness);
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_PWM << shift));
+                break;
+        }
+
+
+    return _count;
+}
+
+static ssize_t pca9633_led1_brightness(struct class *cls,struct class_attribute *attr,
+                         const char *_buf, size_t _count)
+{
+
+    int brightness= 0;
+        u8  ledout = i2c_smbus_read_byte_data(__g_i2c_client, PCA9633_LEDOUT);
+        int shift = 2 * PCA9633_LED1;// led  num
+        u8  mask = 0x3 << shift;
+
+    brightness =  simple_strtol(_buf, NULL, 10);
+    if(brightness>255)
+        brightness = 255;
+
+        switch (brightness) {
+        case 255:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_ON << shift));
+                break;
+        case 0:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        ledout & ~mask);
+                break;
+        default:
+                i2c_smbus_write_byte_data(__g_i2c_client,
+                        PCA9633_PWM_BASE + PCA9633_LED1,
+                        brightness);
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_PWM << shift));
+                break;
+        }
+
+
+    return _count;
+}
+
+
+
+static ssize_t pca9633_led2_brightness(struct class *cls,struct class_attribute *attr,
+                         const char *_buf, size_t _count)
+{
+
+    int brightness= 0;
+        u8  ledout = i2c_smbus_read_byte_data(__g_i2c_client, PCA9633_LEDOUT);
+        int shift = 2 * PCA9633_LED2;// led  num
+        u8  mask = 0x3 << shift;
+
+    brightness =  simple_strtol(_buf, NULL, 10);
+    if(brightness>255)
+        brightness = 255;
+
+        switch (brightness) {
+        case 255:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_ON << shift));
+                break;
+        case 0:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        ledout & ~mask);
+                break;
+        default:
+                i2c_smbus_write_byte_data(__g_i2c_client,
+                        PCA9633_PWM_BASE + PCA9633_LED2,
+                        brightness);
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_PWM << shift));
+                break;
+        }
+
+
+    return _count;
+
+}
+
+
+
+static ssize_t pca9633_led3_brightness(struct class *cls,struct class_attribute *attr,
+                         const char *_buf, size_t _count)
+{
+
+    int brightness= 0;
+        u8  ledout = i2c_smbus_read_byte_data(__g_i2c_client, PCA9633_LEDOUT);
+        int shift = 2 * PCA9633_LED3;// led  num
+        u8  mask = 0x3 << shift;
+
+    brightness =  simple_strtol(_buf, NULL, 10);
+    if(brightness>255)
+        brightness = 255;
+
+        switch (brightness) {
+        case 255:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_ON << shift));
+                break;
+        case 0:
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        ledout & ~mask);
+                break;
+        default:
+                i2c_smbus_write_byte_data(__g_i2c_client,
+                        PCA9633_PWM_BASE + PCA9633_LED3,
+                        brightness);
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                        (ledout & ~mask) | (PCA9633_LED_PWM << shift));
+                break;
+        }
+
+
+    return _count;
+
+}
+
+
+static CLASS_ATTR(led0_brightness,0666,NULL,pca9633_led0_brightness);
+static CLASS_ATTR(led1_brightness,0666,NULL,pca9633_led1_brightness);
+static CLASS_ATTR(led2_brightness,0666,NULL,pca9633_led2_brightness);
+static CLASS_ATTR(led3_brightness,0666,NULL,pca9633_led3_brightness);
+
+
+
+static int pca9633_probe(struct i2c_client *client,
+                 const struct i2c_device_id *id)
+{
+    int err = 0;
+    u8  ledout = 0;
+    int i = 0;
+
+    __g_i2c_client = client;
+
+    __g_pca9633_class = class_create(THIS_MODULE,"pca9633");
+
+        if(NULL==__g_pca9633_class)
+        return -ENOMEM;
+    device_create(__g_pca9633_class,NULL,0,NULL,"pca9633");
+
+    err = class_create_file(__g_pca9633_class,&class_attr_led0_brightness);
+        err = class_create_file(__g_pca9633_class,&class_attr_led1_brightness);
+        err = class_create_file(__g_pca9633_class,&class_attr_led2_brightness);
+        err = class_create_file(__g_pca9633_class,&class_attr_led3_brightness);
+    if(err<0)
+    return err;
+
+        /* Disable LED all-call address and set normal mode */
+        i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_MODE1, 0x00);
+
+        /* Turn off LEDs */
+        i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT, 0x00);
+
+        for(i=0;i<4;i++)
+        {
+            ledout = i2c_smbus_read_byte_data(__g_i2c_client, PCA9633_LEDOUT);
+                i2c_smbus_write_byte_data(__g_i2c_client, PCA9633_LEDOUT,
+                                        (ledout & ~(0x3<<(2*i))) | (PCA9633_LED_ON << (2*i)));
+        }
+
+        return err;
+
+
+}
+
+
+
+static int pca9633_remove(struct i2c_client *client)
+{
+    class_remove_file(__g_pca9633_class,&class_attr_led0_brightness);
+        class_remove_file(__g_pca9633_class,&class_attr_led1_brightness);
+        class_remove_file(__g_pca9633_class,&class_attr_led2_brightness);
+        class_remove_file(__g_pca9633_class,&class_attr_led3_brightness);
+    device_destroy(__g_pca9633_class,0);
+    class_destroy(__g_pca9633_class);
+        __g_pca9633_class = NULL;
+        __g_i2c_client = NULL;
+
+        return 0;
+}
+
+
+
+
+static struct i2c_driver pca9633_driver = {
+        .driver = {
+                .name   = "leds-pca9633",
+                .owner  = THIS_MODULE,
+        },
+        .probe  = pca9633_probe,
+        .remove = pca9633_remove,
+        .id_table = pca9633_id,
+};
+
+
+//module_i2c_driver(pca9633_driver);
+
+
+static int __init pca9633_driver_init(void)
+{
+   return i2c_add_driver(&pca9633_driver);
+}
+
+
+static void __exit pca9633_driver_exit(void)
+{
+    i2c_del_driver(&pca9633_driver);
+}
+
+fs_initcall(pca9633_driver_init);
+module_exit(pca9633_driver_exit);
+
+
+MODULE_AUTHOR("Poco ");
+MODULE_DESCRIPTION("PCA9633 LED driver");
+MODULE_LICENSE("GPL v2");
